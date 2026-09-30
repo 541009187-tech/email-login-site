@@ -1,0 +1,13 @@
+{
+  "name": "email-login-local",
+  "version": "1.0.0",
+  "private": true,
+  "description": "本地独立运行的邮箱登录演示（Node + 文件存储 + QQ邮箱SMTP）",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "nodemailer": "^6.9.13"
+  }
+}

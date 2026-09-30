@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>管理员后台 - 邮箱登录平台</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; background: #f1f5f9; color: #1e293b; }
+  button { cursor: pointer; border: none; border-radius: 8px; font-size: 14px; }
+  input, select { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; }
+  input:focus, select:focus { border-color: #2563eb; }
+  .hidden { display: none !important; }
+
+  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .login-card { background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.08); padding: 36px; width: 100%; max-width: 380px; }
+  .login-card h1 { font-size: 20px; margin-bottom: 6px; }
+  .login-card .sub { color: #64748b; font-size: 13px; margin-bottom: 24px; }
+  .btn-primary { width: 100%; padding: 11px; background: #2563eb; color: #fff; font-weight: 600; margin-top: 8px; }
+  .btn-primary:hover { background: #1d4ed8; }
+  .msg { font-size: 13px; margin-top: 12px; min-height: 18px; }
+  .msg.err { color: #dc2626; }
+
+  .header { background: #1e293b; color: #fff; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
+  .header h1 { font-size: 18px; }
+  .header .logout { background: transparent; color: #cbd5e1; border: 1px solid #475569; padding: 6px 14px; }
+  .container { max-width: 1200px; margin: 0 auto; padding: 24px; }
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px; margin-bottom: 24px; }
+  .stat-card { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .stat-card .num { font-size: 28px; font-weight: 700; color: #2563eb; }
+  .stat-card .num.red { color: #dc2626; }
+  .stat-card .label { font-size: 13px; color: #64748b; margin-top: 4px; }
+  .card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,.06); }
+  .card h2 { font-size: 16px; margin-bottom: 16px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+  th { background: #f8fafc; color: #64748b; font-weight: 600; font-size: 13px; white-space: nowrap; }
+  .badge { background: #dcfce7; color: #16a34a; padding: 2px 10px; border-radius: 999px; font-size: 12px; }
+  .badge.gray { background: #f1f5f9; color: #64748b; }
+  .badge.red { background: #fee2e2; color: #dc2626; }
+  .badge.orange { background: #fffbeb; color: #d97706; }
+  .btn-danger { background: #fef2f2; color: #dc2626; padding: 5px 10px; font-size: 12px; margin-right: 4px; }
+  .btn-danger:hover { background: #fee2e2; }
+  .btn-warn { background: #fffbeb; color: #d97706; padding: 5px 10px; font-size: 12px; margin-right: 4px; }
+  .btn-warn:hover { background: #fef3c7; }
+  .btn-green { background: #f0fdf4; color: #16a34a; padding: 5px 10px; font-size: 12px; margin-right: 4px; }
+  .btn-green:hover { background: #dcfce7; }
+  .btn-info { background: #eff6ff; color: #2563eb; padding: 5px 10px; font-size: 12px; margin-right: 4px; }
+  .btn-info:hover { background: #dbeafe; }
+  .empty { text-align: center; color: #94a3b8; padding: 40px; }
+  .ban-info { font-size: 12px; color: #dc2626; margin-top: 2px; }
+  .risk-high { background: #fef2f2 !important; }
+  .last-login { font-size: 12px; color: #64748b; }
+
+  .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+  .modal { background: #fff; border-radius: 16px; padding: 28px; width: 100%; max-width: 420px; box-shadow: 0 20px 50px rgba(0,0,0,.2); max-height: 90vh; overflow-y: auto; }
+  .modal.large { max-width: 700px; }
+  .modal h3 { font-size: 18px; margin-bottom: 18px; }
+  .modal .field { margin-bottom: 14px; }
+  .modal label { display: block; font-size: 13px; color: #475569; margin-bottom: 6px; }
+  .duration-row { display: flex; gap: 8px; }
+  .duration-row .item { flex: 1; }
+  .duration-row .item input { text-align: center; }
+  .duration-row .item span { display: block; text-align: center; font-size: 12px; color: #64748b; margin-top: 4px; }
+  .permanent-row { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+  .permanent-row input { width: auto; }
+  .permanent-row label { margin: 0; font-size: 14px; color: #dc2626; font-weight: 600; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
+  .modal-actions button { flex: 1; padding: 10px; }
+  .btn-cancel { background: #f1f5f9; color: #475569; }
+  .btn-cancel:hover { background: #e2e8f0; }
+  .btn-confirm { background: #dc2626; color: #fff; font-weight: 600; }
+  .btn-confirm:hover { background: #b91c1c; }
+
+  .log-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .log-table th, .log-table td { padding: 8px 10px; text-align: left; border-bottom: 1px solid #f1f5f9; }
+  .log-table th { background: #f8fafc; color: #64748b; font-weight: 600; font-size: 12px; }
+  .log-ip { font-family: monospace; font-size: 12px; }
+  .log-ua { font-size: 11px; color: #94a3b8; max-width: 250px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .log-success { color: #16a34a; }
+  .log-fail { color: #dc2626; }
+
+  @media (max-width: 640px) {
+    table { font-size: 12px; }
+    th, td { padding: 8px 6px; }
+  }
+</style>
+</head>
+<body>
+
+<div id="adminLogin" class="login-wrap">
+  <div class="login-card">
+    <h1>管理员后台</h1>
+    <div class="sub">请输入管理员密码</div>
+    <input id="adminPwd" type="password" placeholder="管理员密码" onkeydown="if(event.key==='Enter')adminLogin()" />
+    <button class="btn-primary" onclick="adminLogin()">登 录</button>
+    <div id="loginMsg" class="msg"></div>
+  </div>
+</div>
+
+<div id="adminPanel" class="hidden">
+  <div class="header">
+    <h1>管理员后台</h1>
+    <button class="logout" onclick="adminLogout()">退出</button>
+  </div>
+  <div class="container">
+    <div class="stats" id="statsBox"></div>
+    <div class="card">
+      <h2>用户列表</h2>
+      <div id="userList"></div>
+    </div>
+  </div>
+</div>
+
+<div id="banModal" class="modal-overlay hidden">
+  <div class="modal">
+    <h3>封禁账号</h3>
+    <div style="font-size:13px;color:#64748b;margin-bottom:14px;" id="banTargetEmail"></div>
+    <div class="permanent-row">
+      <input type="checkbox" id="banPermanent" onchange="togglePermanent()" />
+      <label for="banPermanent">永久封禁</label>
+    </div>
+    <div class="field" id="durationField">
+      <label>封禁时长</label>
+      <div class="duration-row">
+        <div class="item"><input type="number" id="banDays" min="0" value="0" /><span>天</span></div>
+        <div class="item"><input type="number" id="banMonths" min="0" value="0" /><span>月</span></div>
+        <div class="item"><input type="number" id="banYears" min="0" value="0" /><span>年</span></div>
+      </div>
+    </div>
+    <div class="field">
+      <label>封禁原因（可选）</label>
+      <input id="banReason" placeholder="例如：违规操作" />
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeBanModal()">取消</button>
+      <button class="btn-confirm" onclick="confirmBan()">确认封禁</button>
+    </div>
+  </div>
+</div>
+
+<div id="logsModal" class="modal-overlay hidden">
+  <div class="modal large">
+    <h3>登录记录 - <span id="logsTargetEmail"></span></h3>
+    <div id="logsContent"></div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeLogsModal()">关闭</button>
+    </div>
+  </div>
+</div>
+
+<script>
+let adminToken = localStorage.getItem('adminToken') || '';
+let currentBanEmail = '';
+const $ = id => document.getElementById(id);
+
+async function api(path, opts = {}) {
+  opts.headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  if (adminToken) opts.headers['Authorization'] = 'Bearer ' + adminToken;
+  const res = await fetch(path, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || '请求失败');
+  return data;
+}
+
+async function adminLogin() {
+  try {
+    const r = await api('/api/admin/login', { method: 'POST', body: JSON.stringify({ password: $('adminPwd').value }) });
+    adminToken = r.token;
+    localStorage.setItem('adminToken', adminToken);
+    showPanel();
+  } catch (e) {
+    $('loginMsg').textContent = e.message;
+    $('loginMsg').className = 'msg err';
+  }
+}
+
+async function adminLogout() {
+  await api('/api/admin/logout', { method: 'POST' }).catch(() => {});
+  adminToken = '';
+  localStorage.removeItem('adminToken');
+  location.reload();
+}
+
+function showPanel() {
+  $('adminLogin').classList.add('hidden');
+  $('adminPanel').classList.remove('hidden');
+  loadData();
+}
+
+async function loadData() {
+  try {
+    const [stats, users] = await Promise.all([
+      api('/api/admin/stats'),
+      api('/api/admin/users'),
+    ]);
+    renderStats(stats);
+    renderUsers(users.users);
+  } catch (e) {
+    if (e.message === '未登录') { adminToken = ''; localStorage.removeItem('adminToken'); location.reload(); }
+  }
+}
+
+function renderStats(s) {
+  $('statsBox').innerHTML = `
+    <div class="stat-card"><div class="num">${s.totalUsers}</div><div class="label">总用户数</div></div>
+    <div class="stat-card"><div class="num">${s.withPassword}</div><div class="label">已设密码</div></div>
+    <div class="stat-card"><div class="num">${s.withoutPassword}</div><div class="label">未设密码</div></div>
+    <div class="stat-card"><div class="num">${s.todayNew}</div><div class="label">今日新增</div></div>
+    <div class="stat-card"><div class="num">${s.activeSessions}</div><div class="label">在线会话</div></div>
+    <div class="stat-card"><div class="num red">${s.bannedUsers || 0}</div><div class="label">被封禁</div></div>
+  `;
+}
+
+function isUserBanned(u) {
+  if (!u.banned) return false;
+  if (u.banned.permanent) return true;
+  if (u.banned.until && new Date(u.banned.until) > new Date()) return true;
+  return false;
+}
+
+function banStatusText(u) {
+  if (!u.banned) return '';
+  if (u.banned.permanent) return u.banned.autoBanned ? '系统自动永久封禁' : '永久封禁';
+  if (u.banned.until) return '封禁至 ' + new Date(u.banned.until).toLocaleString('zh-CN');
+  return '';
+}
+
+function riskBadge(level) {
+  if (level === 'high') return '<span class="badge red">高风险</span>';
+  if (level === 'medium') return '<span class="badge orange">中风险</span>';
+  return '<span class="badge">正常</span>';
+}
+
+function renderUsers(users) {
+  if (!users.length) {
+    $('userList').innerHTML = '<div class="empty">暂无用户</div>';
+    return;
+  }
+  $('userList').innerHTML = `
+    <table>
+      <thead><tr><th>邮箱</th><th>昵称</th><th>状态</th><th>风险</th><th>最近登录</th><th>24h IP数</th><th>注册时间</th><th>操作</th></tr></thead>
+      <tbody>
+        ${users.map(u => {
+          const banned = isUserBanned(u);
+          const rowClass = u.riskLevel === 'high' && !banned ? 'risk-high' : '';
+          return `
+          <tr class="${rowClass}">
+            <td>${u.email}</td>
+            <td>${u.name || '—'}</td>
+            <td>
+              ${banned ? `<span class="badge red">已封禁</span><div class="ban-info">${banStatusText(u)}</div>` : '<span class="badge">正常</span>'}
+            </td>
+            <td>${riskBadge(u.riskLevel)}</td>
+            <td class="last-login">${u.lastLogin ? new Date(u.lastLogin).toLocaleString('zh-CN') : '—'}</td>
+            <td>${u.recentIpCount || 0}</td>
+            <td>${new Date(u.createdAt).toLocaleString('zh-CN')}</td>
+            <td style="white-space:nowrap;">
+              <button class="btn-info" onclick="viewLogs('${u.email}')">记录</button>
+              ${banned
+                ? `<button class="btn-green" onclick="unbanUser('${u.email}')">解封</button>`
+                : `<button class="btn-warn" onclick="openBanModal('${u.email}')">封禁</button>`}
+              <button class="btn-danger" onclick="deleteUser('${u.email}')">删除</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
+  `;
+}
+
+function openBanModal(email) {
+  currentBanEmail = email;
+  $('banTargetEmail').textContent = '封禁账号：' + email;
+  $('banPermanent').checked = false;
+  $('banDays').value = 0;
+  $('banMonths').value = 0;
+  $('banYears').value = 0;
+  $('banReason').value = '';
+  $('durationField').style.display = '';
+  $('banModal').classList.remove('hidden');
+}
+
+function closeBanModal() {
+  $('banModal').classList.add('hidden');
+}
+
+function togglePermanent() {
+  const isPerm = $('banPermanent').checked;
+  $('durationField').style.display = isPerm ? 'none' : '';
+}
+
+async function confirmBan() {
+  const permanent = $('banPermanent').checked;
+  const days = Number($('banDays').value) || 0;
+  const months = Number($('banMonths').value) || 0;
+  const years = Number($('banYears').value) || 0;
+  const reason = $('banReason').value.trim();
+
+  if (!permanent && days <= 0 && months <= 0 && years <= 0) {
+    alert('请填写封禁时长，或选择永久封禁');
+    return;
+  }
+
+  try {
+    await api('/api/admin/users/' + encodeURIComponent(currentBanEmail) + '/ban', {
+      method: 'POST',
+      body: JSON.stringify({ permanent, days, months, years, reason }),
+    });
+    closeBanModal();
+    loadData();
+  } catch (e) { alert(e.message); }
+}
+
+async function unbanUser(email) {
+  if (!confirm(`确定要解封用户 ${email} 吗？`)) return;
+  try {
+    await api('/api/admin/users/' + encodeURIComponent(email) + '/unban', { method: 'POST' });
+    loadData();
+  } catch (e) { alert(e.message); }
+}
+
+async function deleteUser(email) {
+  if (!confirm(`确定要删除用户 ${email} 吗？此操作不可恢复！`)) return;
+  try {
+    await api('/api/admin/users/' + encodeURIComponent(email), { method: 'DELETE' });
+    loadData();
+  } catch (e) { alert(e.message); }
+}
+
+async function viewLogs(email) {
+  $('logsTargetEmail').textContent = email;
+  $('logsContent').innerHTML = '<div class="empty">加载中...</div>';
+  $('logsModal').classList.remove('hidden');
+  try {
+    const data = await api('/api/admin/users/' + encodeURIComponent(email) + '/logs');
+    if (!data.logs || !data.logs.length) {
+      $('logsContent').innerHTML = '<div class="empty">暂无登录记录</div>';
+      return;
+    }
+    $('logsContent').innerHTML = `
+      <table class="log-table">
+        <thead><tr><th>时间</th><th>IP</th><th>结果</th><th>设备/浏览器</th></tr></thead>
+        <tbody>
+          ${data.logs.map(l => `
+            <tr>
+              <td>${new Date(l.time).toLocaleString('zh-CN')}</td>
+              <td class="log-ip">${l.ip}</td>
+              <td class="${l.success ? 'log-success' : 'log-fail'}">${l.success ? '成功' : '失败'}</td>
+              <td class="log-ua" title="${l.userAgent || ''}">${l.userAgent || '—'}</td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
+  } catch (e) {
+    $('logsContent').innerHTML = '<div class="empty" style="color:#dc2626;">加载失败：' + e.message + '</div>';
+  }
+}
+
+function closeLogsModal() {
+  $('logsModal').classList.add('hidden');
+}
+
+if (adminToken) showPanel();
+</script>
+</body>
+</html>

@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>邮箱登录平台</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Microsoft YaHei", sans-serif; background: #f1f5f9; color: #1e293b; }
+  button { cursor: pointer; border: none; border-radius: 8px; font-size: 14px; }
+  input { width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; outline: none; }
+  input:focus { border-color: #2563eb; }
+  .hidden { display: none !important; }
+
+  /* 登录页 */
+  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; }
+  .login-card { background: #fff; border-radius: 16px; box-shadow: 0 10px 30px rgba(0,0,0,.08); padding: 36px; width: 100%; max-width: 400px; }
+  .login-card h1 { font-size: 22px; margin-bottom: 6px; }
+  .login-card .sub { color: #64748b; font-size: 13px; margin-bottom: 24px; }
+  .tabs { display: flex; background: #f1f5f9; border-radius: 8px; padding: 4px; margin-bottom: 20px; }
+  .tabs button { flex: 1; background: transparent; padding: 8px; border-radius: 6px; color: #64748b; }
+  .tabs button.active { background: #fff; color: #2563eb; font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,.06); }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 13px; color: #475569; margin-bottom: 6px; }
+  .code-row { display: flex; gap: 8px; }
+  .code-row input { flex: 1; }
+  .btn-send { white-space: nowrap; padding: 0 14px; background: #eff6ff; color: #2563eb; font-size: 13px; }
+  .btn-send:disabled { color: #94a3b8; cursor: not-allowed; }
+  .btn-primary { width: 100%; padding: 11px; background: #2563eb; color: #fff; font-weight: 600; margin-top: 8px; }
+  .btn-primary:hover { background: #1d4ed8; }
+  .msg { font-size: 13px; margin-top: 12px; min-height: 18px; }
+  .msg.err { color: #dc2626; }
+  .msg.ok { color: #16a34a; }
+
+  /* 应用布局 */
+  .app { display: flex; min-height: 100vh; }
+  .sidebar { width: 220px; background: #1e293b; color: #cbd5e1; padding: 24px 0; }
+  .sidebar .brand { padding: 0 20px 20px; font-size: 16px; font-weight: 600; color: #fff; }
+  .sidebar a { display: block; padding: 12px 20px; color: #94a3b8; text-decoration: none; cursor: pointer; }
+  .sidebar a.active, .sidebar a:hover { background: #334155; color: #fff; }
+  .main { flex: 1; padding: 32px; max-width: 760px; }
+  .card { background: #fff; border-radius: 12px; padding: 24px; box-shadow: 0 1px 3px rgba(0,0,0,.06); margin-bottom: 16px; }
+  .card h2 { font-size: 18px; margin-bottom: 16px; }
+  .profile-row { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+  .avatar { width: 64px; height: 64px; border-radius: 50%; background: #2563eb; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 26px; font-weight: 600; }
+  .kv { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+  .kv .k { color: #64748b; }
+  .badge { background: #dcfce7; color: #16a34a; padding: 2px 10px; border-radius: 999px; font-size: 12px; }
+  .badge.gray { background: #f1f5f9; color: #64748b; }
+  .btn { padding: 9px 16px; border-radius: 8px; font-size: 14px; }
+  .btn-outline { background: #fff; border: 1px solid #cbd5e1; }
+  .btn-danger { background: #fff; border: 1px solid #fecaca; color: #dc2626; }
+  .danger-zone { border: 1px solid #fecaca; background: #fef2f2; }
+  .danger-zone h2 { color: #dc2626; }
+  .form-actions { margin-top: 12px; }
+  @media (max-width: 640px) {
+    .app { flex-direction: column; }
+    .sidebar { width: 100%; display: flex; padding: 0; }
+    .sidebar .brand { display: none; }
+    .sidebar a { flex: 1; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- 登录视图 -->
+<div id="loginView" class="login-wrap">
+  <div class="login-card">
+    <h1>邮箱登录平台</h1>
+    <div class="sub">本地独立版 · 使用邮箱验证码或密码登录</div>
+    <div class="tabs">
+      <button id="tabCode" class="active" onclick="switchTab('code')">验证码登录</button>
+      <button id="tabPwd" onclick="switchTab('pwd')">密码登录</button>
+    </div>
+
+    <div class="field">
+      <label>邮箱</label>
+      <input id="email" type="email" placeholder="you@example.com" autocomplete="email" />
+    </div>
+
+    <div id="codeBlock" class="field">
+      <label>验证码</label>
+      <div class="code-row">
+        <input id="code" placeholder="6 位验证码" maxlength="6" />
+        <button id="btnSend" class="btn-send" onclick="sendCode()">发送验证码</button>
+      </div>
+    </div>
+
+    <div id="pwdBlock" class="field hidden">
+      <label>密码</label>
+      <input id="password" type="password" placeholder="请输入密码" />
+    </div>
+
+    <button class="btn-primary" onclick="login()">登 录</button>
+    <div id="loginMsg" class="msg"></div>
+  </div>
+</div>
+
+<!-- 应用视图 -->
+<div id="appView" class="app hidden">
+  <aside class="sidebar">
+    <div class="brand">邮箱登录平台</div>
+    <a id="navDash" class="active" onclick="showPage('dash')">仪表盘</a>
+    <a id="navProfile" onclick="showPage('profile')">个人资料</a>
+    <a id="navSettings" onclick="showPage('settings')">设置</a>
+  </aside>
+  <main class="main">
+    <div id="pageDash" class="card">
+      <h2>欢迎回来 👋</h2>
+      <p id="dashEmail" style="color:#64748b;"></p>
+    </div>
+
+    <div id="pageProfile" class="card hidden">
+      <h2>个人资料</h2>
+      <div class="profile-row">
+        <div class="avatar" id="avatar">?</div>
+        <div>
+          <div style="font-weight:600;" id="profileName">用户</div>
+          <div style="font-size:13px;color:#64748b;" id="profileEmail"></div>
+        </div>
+      </div>
+      <div class="kv"><span class="k">注册时间</span><span id="profileCreated"></span></div>
+      <div class="kv"><span class="k">密码状态</span><span id="profilePwd"></span></div>
+    </div>
+
+    <div id="pageSettings" class="hidden">
+      <div class="card">
+        <h2>密码管理</h2>
+        <div id="setPwdBox">
+          <div class="field"><label>新密码（至少 6 位）</label><input id="newPwd" type="password" /></div>
+          <button class="btn btn-primary" style="width:auto;margin-top:0;" onclick="setPassword()">设置密码</button>
+        </div>
+        <div id="changePwdBox" class="hidden">
+          <div class="field"><label>原密码</label><input id="oldPwd" type="password" /></div>
+          <div class="field"><label>新密码（至少 6 位）</label><input id="chgNewPwd" type="password" /></div>
+          <button class="btn btn-primary" style="width:auto;margin-top:0;" onclick="changePassword()">修改密码</button>
+        </div>
+      </div>
+      <div class="card">
+        <h2>账号</h2>
+        <button class="btn btn-outline" onclick="logout()">退出登录</button>
+      </div>
+      <div class="card danger-zone">
+        <h2>注销账号</h2>
+        <p style="font-size:13px;color:#991b1b;margin-bottom:12px;">注销后账号和数据将被永久删除，无法恢复。</p>
+        <div class="field"><label>请输入你的邮箱以确认</label><input id="confirmEmail" /></div>
+        <button class="btn btn-danger" onclick="deleteAccount()">确认注销</button>
+      </div>
+    </div>
+    <div id="appMsg" class="msg"></div>
+  </main>
+</div>
+
+<script>
+let token = localStorage.getItem('token') || '';
+let loginMode = 'code';
+let countdown = 0;
+
+const $ = id => document.getElementById(id);
+function setMsg(el, text, type) { el.textContent = text; el.className = 'msg ' + (type || ''); }
+
+function switchTab(mode) {
+  loginMode = mode;
+  $('tabCode').classList.toggle('active', mode === 'code');
+  $('tabPwd').classList.toggle('active', mode === 'pwd');
+  $('codeBlock').classList.toggle('hidden', mode !== 'code');
+  $('pwdBlock').classList.toggle('hidden', mode !== 'pwd');
+}
+
+async function api(path, opts = {}) {
+  opts.headers = Object.assign({ 'Content-Type': 'application/json' }, opts.headers || {});
+  if (token) opts.headers['Authorization'] = 'Bearer ' + token;
+  const res = await fetch(path, opts);
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || '请求失败');
+  return data;
+}
+
+async function sendCode() {
+  const email = $('email').value.trim();
+  if (!email) { setMsg($('loginMsg'), '请先输入邮箱', 'err'); return; }
+  try {
+    await api('/api/send-code', { method: 'POST', body: JSON.stringify({ email }) });
+    setMsg($('loginMsg'), '验证码已发送，请到邮箱查收（注意垃圾邮件）', 'ok');
+    countdown = 60;
+    const btn = $('btnSend');
+    btn.disabled = true;
+    const t = setInterval(() => {
+      btn.textContent = countdown + ' 秒后重发';
+      if (--countdown < 0) { clearInterval(t); btn.disabled = false; btn.textContent = '发送验证码'; }
+    }, 1000);
+  } catch (e) { setMsg($('loginMsg'), e.message, 'err'); }
+}
+
+async function login() {
+  const email = $('email').value.trim();
+  try {
+    let data;
+    if (loginMode === 'code') {
+      data = await api('/api/code-login', { method: 'POST', body: JSON.stringify({ email, code: $('code').value.trim() }) });
+    } else {
+      data = await api('/api/password-login', { method: 'POST', body: JSON.stringify({ email, password: $('password').value }) });
+    }
+    token = data.token;
+    localStorage.setItem('token', token);
+    enterApp(data);
+  } catch (e) { setMsg($('loginMsg'), e.message, 'err'); }
+}
+
+function enterApp(me) {
+  $('loginView').classList.add('hidden');
+  $('appView').classList.remove('hidden');
+  loadProfile(me);
+}
+
+async function loadProfile(me) {
+  if (!me) { try { me = await api('/api/me'); } catch { token = ''; localStorage.removeItem('token'); location.reload(); return; } }
+  $('dashEmail').textContent = '当前登录：' + me.email;
+  $('profileEmail').textContent = me.email;
+  $('avatar').textContent = me.email[0].toUpperCase();
+  $('profileName').textContent = me.email.split('@')[0];
+  $('profileCreated').textContent = new Date(me.createdAt).toLocaleString('zh-CN');
+  $('profilePwd').innerHTML = me.hasPassword
+    ? '<span class="badge">已设置</span>'
+    : '<span class="badge gray">未设置</span>';
+  $('setPwdBox').classList.toggle('hidden', me.hasPassword);
+  $('changePwdBox').classList.toggle('hidden', !me.hasPassword);
+}
+
+function showPage(p) {
+  ['dash', 'profile', 'settings'].forEach(k => $('page' + k[0].toUpperCase() + k.slice(1)).classList.toggle('hidden', k !== p));
+  ['Dash', 'Profile', 'Settings'].forEach(k => $('nav' + k).classList.toggle('active', k.toLowerCase() === p));
+}
+
+async function setPassword() {
+  try {
+    await api('/api/set-password', { method: 'POST', body: JSON.stringify({ password: $('newPwd').value }) });
+    setMsg($('appMsg'), '密码设置成功', 'ok');
+    loadProfile();
+  } catch (e) { setMsg($('appMsg'), e.message, 'err'); }
+}
+async function changePassword() {
+  try {
+    await api('/api/change-password', { method: 'POST', body: JSON.stringify({ oldPassword: $('oldPwd').value, newPassword: $('chgNewPwd').value }) });
+    setMsg($('appMsg'), '密码修改成功', 'ok');
+    $('oldPwd').value = ''; $('chgNewPwd').value = '';
+  } catch (e) { setMsg($('appMsg'), e.message, 'err'); }
+}
+async function logout() {
+  await api('/api/logout', { method: 'POST' }).catch(() => {});
+  token = ''; localStorage.removeItem('token');
+  location.reload();
+}
+async function deleteAccount() {
+  if (!confirm('确定要注销账号吗？此操作不可恢复！')) return;
+  try {
+    await api('/api/account', { method: 'DELETE', body: JSON.stringify({ email: $('confirmEmail').value.trim() }) });
+    alert('账号已注销');
+    token = ''; localStorage.removeItem('token');
+    location.reload();
+  } catch (e) { setMsg($('appMsg'), e.message, 'err'); }
+}
+
+// 启动时检查登录态
+if (token) loadProfile();
+</script>
+</body>
+</html>

@@ -1,0 +1,43 @@
+{
+  "users": {
+    "541009187@qq.com": {
+      "email": "541009187@qq.com",
+      "passwordHash": "1c1b37d33813b2dec17a637441d41bc8be2530b9fd8e550a5a556b735f4583c67b2d40593ed989911e324df87b8e07fa121e6b5a7631c6f9cc4cee62edc95768",
+      "salt": "2bd9a319c5cc7930b677e0cfa9843e1a",
+      "createdAt": "2026-09-12T01:31:21.571Z",
+      "banned": null
+    }
+  },
+  "codes": {
+    "541009187@qq.com": {
+      "code": "833478",
+      "sentAt": 1789177282785,
+      "expiresAt": 1789177582785,
+      "usedAt": 1789177315846
+    },
+    "test@test.com": {
+      "code": "806561",
+      "sentAt": 1790489576686,
+      "expiresAt": 1790489876686,
+      "usedAt": null
+    }
+  },
+  "sessions": {},
+  "adminSessions": {
+    "a9852bbb633062c3d98a696958dd97dbcaf198da22219a1a94c5a37dcc95e432": {
+      "expiresAt": "2026-09-26T19:38:16.559Z"
+    },
+    "c55f754eed5f6d1295a347e9acfbffda7c42cd759105ae3b56ef6b2ed70ed1f7": {
+      "expiresAt": "2026-09-26T19:43:40.499Z"
+    },
+    "d95d9c47cdc8038cb8e52a5ee78912c82abfd478d5ab298ec2fdd35657d1e0a9": {
+      "expiresAt": "2026-09-26T19:53:43.407Z"
+    },
+    "2d0e1e1dbb8f0b5f5f881a43f5a29bcb5d42376fabbdcbaf5a0006c7bffa3bc1": {
+      "expiresAt": "2026-09-26T19:54:08.108Z"
+    },
+    "22a0e9d5e156893c9b441524a032b4d5e2a176ea08f28094d61025f6932e1e24": {
+      "expiresAt": "2026-09-27T14:12:56.666Z"
+    }
+  }
+}
